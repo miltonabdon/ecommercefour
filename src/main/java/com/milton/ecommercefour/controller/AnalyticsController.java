@@ -1,9 +1,9 @@
 package com.milton.ecommercefour.controller;
 
-import com.milton.ecommercefour.repository.PedidoRepository;
 import com.milton.ecommercefour.repository.PedidoRepository.TicketMedioProjecao;
 import com.milton.ecommercefour.repository.PedidoRepository.ReceitaMensalProjecao;
 import com.milton.ecommercefour.repository.PedidoRepository.UsuarioTopProjecao;
+import com.milton.ecommercefour.service.AnalyticsService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,28 +15,24 @@ import java.util.List;
 @RequestMapping("/analytics")
 public class AnalyticsController {
 
-    private final PedidoRepository pedidoRepository;
+    private final AnalyticsService analyticsService;
 
-    public AnalyticsController(PedidoRepository pedidoRepository) {
-        this.pedidoRepository = pedidoRepository;
+    public AnalyticsController(AnalyticsService analyticsService) {
+        this.analyticsService = analyticsService;
     }
 
-    // TOP N users that bought the most (by total spent)
-    @GetMapping("/top-users")
+    @GetMapping("/top-usuarios")
     public List<UsuarioTopProjecao> topUsers(@RequestParam(name = "limit", defaultValue = "5") int limit) {
-        if (limit <= 0) limit = 5;
-        return pedidoRepository.findTopUsersByTotalSpent(limit);
+        return analyticsService.topUsuarios(limit);
     }
 
-    // Medium (Average) Ticket of the Pedidos for each User
     @GetMapping("/avg-ticket")
     public List<TicketMedioProjecao> averageTicketPerUser() {
-        return pedidoRepository.findAvgTicketPerUser();
+        return analyticsService.ticketMedioPorUsuario();
     }
 
-    // Total Amount Earned money on Pedidos by month
-    @GetMapping("/revenue-by-month")
+    @GetMapping("/receita-por-mes")
     public List<ReceitaMensalProjecao> revenueByMonth() {
-        return pedidoRepository.findMonthlyRevenue();
+        return analyticsService.receitaPorMes();
     }
 }
