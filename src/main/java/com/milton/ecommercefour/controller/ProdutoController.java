@@ -1,6 +1,7 @@
 package com.milton.ecommercefour.controller;
 
 import com.milton.ecommercefour.domain.Produto;
+import com.milton.ecommercefour.exception.RecursoNaoEncontradoException;
 import com.milton.ecommercefour.service.ProdutoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,10 @@ public class ProdutoController {
     }
 
     @GetMapping("/{id}")
-    public Optional<Produto> findById(@PathVariable UUID id) { return produtoService.findById(id); }
+    public Produto findById(@PathVariable UUID id) {
+        return produtoService.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + id));
+    }
 
     @PostMapping
     public ResponseEntity<Produto> create(@RequestBody Produto produto) {
@@ -34,10 +38,8 @@ public class ProdutoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Produto> update(@PathVariable UUID id, @RequestBody Produto produto) {
-        Optional<Produto> existing = produtoService.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        Produto existente = produtoService.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + id));
         // Keep original creation date if present in existing
         Produto toUpdate = new Produto(
                 id,
@@ -46,7 +48,7 @@ public class ProdutoController {
                 produto.preco(),
                 produto.categoria(),
                 produto.quantidadeEstoque(),
-                existing.get().dataCriacao(),
+                existente.dataCriacao(),
                 null
         );
         Produto updated = produtoService.update(id, toUpdate);
@@ -55,10 +57,9 @@ public class ProdutoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        Optional<Produto> existing = produtoService.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        // Throws 404 if not found
+        produtoService.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + id));
         produtoService.deleteById(id);
         return ResponseEntity.noContent().build();
     }

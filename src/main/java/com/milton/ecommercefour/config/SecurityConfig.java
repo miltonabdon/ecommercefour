@@ -131,7 +131,6 @@ public class SecurityConfig {
                         SecurityContextHolder.getContext().setAuthentication(auth);
                     }
                 } catch (Exception e) {
-                    // Invalid token; clear context
                     SecurityContextHolder.clearContext();
                 }
             }

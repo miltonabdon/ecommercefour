@@ -1,5 +1,6 @@
 package com.milton.ecommercefour.controller;
 
+import com.milton.ecommercefour.exception.RequisicaoInvalidaException;
 import com.milton.ecommercefour.repository.PedidoRepository.TicketMedioProjecao;
 import com.milton.ecommercefour.repository.PedidoRepository.ReceitaMensalProjecao;
 import com.milton.ecommercefour.repository.PedidoRepository.UsuarioTopProjecao;
@@ -23,6 +24,9 @@ public class AnalyticsController {
 
     @GetMapping("/top-usuarios")
     public List<UsuarioTopProjecao> topUsers(@RequestParam(name = "limit", defaultValue = "5") int limit) {
+        if (limit < 1) {
+            throw new RequisicaoInvalidaException("Parâmetro 'limit' deve ser >= 1");
+        }
         return analyticsService.topUsuarios(limit);
     }
 
