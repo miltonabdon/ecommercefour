@@ -12,6 +12,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import jakarta.persistence.EntityManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -24,16 +26,23 @@ public class EcommercefourApplication {
         SpringApplication.run(EcommercefourApplication.class, args);
     }
 
+    private static UUID sequentialUUID(long sequence) {
+        long now = System.currentTimeMillis();
+        long msb = (now << 16) | (sequence & 0xFFFF);
+        long lsb = ThreadLocalRandom.current().nextLong();
+        return new UUID(msb, lsb);
+    }
+
     @Bean
-    CommandLineRunner seedData(ProdutoRepository produtoRepository, PedidoRepository pedidoRepository, UserRepository userRepository) {
-        return args -> {
+    CommandLineRunner seedData(ProdutoRepository produtoRepository, PedidoRepository pedidoRepository, UserRepository userRepository, EntityManager entityManager, TransactionTemplate transactionTemplate) {
+        return args -> transactionTemplate.execute(status -> {
             // Seed Produtos
             if (produtoRepository.count() == 0) {
                 Date now = new Date();
                 List<String> categorias = Arrays.asList("Eletrônicos", "Livros", "Casa", "Moda", "Esportes");
                 List<Produto> produtos = IntStream.rangeClosed(1, 15)
                         .mapToObj(i -> new Produto(
-                                null,
+                                sequentialUUID(i),
                                 "Produto " + i,
                                 "Descrição do produto número " + i,
                                 ThreadLocalRandom.current().nextDouble(10.0, 1000.0),
@@ -43,36 +52,45 @@ public class EcommercefourApplication {
                                 now
                         ))
                         .collect(Collectors.toList());
-                produtoRepository.saveAll(produtos);
+                for (Produto p : produtos) {
+                    entityManager.persist(p);
+                }
             }
 
             // Seed Pedidos
             if (pedidoRepository.count() == 0) {
                 List<Produto> allProdutos = produtoRepository.findAll();
                 if (!allProdutos.isEmpty()) {
-                    List<Pedido> pedidos = new ArrayList<>();
+                    // Work with managed references to avoid detached entity errors when persisting Pedido
+                    List<UUID> allIds = new ArrayList<>(allProdutos.stream().map(Produto::id).toList());
                     for (int i = 1; i <= 5; i++) {
-                        int size = ThreadLocalRandom.current().nextInt(1, Math.min(6, allProdutos.size() + 1));
-                        Collections.shuffle(allProdutos);
-                        List<Produto> selected = new ArrayList<>(allProdutos.subList(0, size));
-                        double total = selected.stream().map(Produto::preco).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
+                        int size = ThreadLocalRandom.current().nextInt(1, Math.min(6, allIds.size() + 1));
+                        Collections.shuffle(allIds);
+                        List<UUID> selectedIds = new ArrayList<>(allIds.subList(0, size));
+                        List<Produto> selectedManaged = selectedIds.stream()
+                                .map(id -> entityManager.getReference(Produto.class, id))
+                                .toList();
+                        double total = selectedManaged.stream().map(Produto::preco).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
                         Date createdAt = new Date();
-                        pedidos.add(new Pedido(null, selected, Status.PENDENTE, false, total, null, createdAt));
+                        Pedido novo = new Pedido(sequentialUUID(1000L + i), selectedManaged, Status.PENDENTE, false, total, "admin", createdAt);
+                        entityManager.persist(novo);
                     }
-                    pedidoRepository.saveAll(pedidos);
                 }
             }
 
             // Seed Users (persist on MySQL)
             if (userRepository.count() == 0) {
                 List<User> users = List.of(
-                        new User(null, "Admin", "User", "admin@ecommerce.com"),
-                        new User(null, "Regular", "User", "user@ecommerce.com"),
-                        new User(null, "Maria", "Silva", "maria.silva@example.com"),
-                        new User(null, "João", "Souza", "joao.souza@example.com")
+                        new User(sequentialUUID(2000L), "Admin", "User", "admin@ecommerce.com"),
+                        new User(sequentialUUID(2001L), "Regular", "User", "user@ecommerce.com"),
+                        new User(sequentialUUID(2002L), "Maria", "Silva", "maria.silva@example.com"),
+                        new User(sequentialUUID(2003L), "João", "Souza", "joao.souza@example.com")
                 );
-                userRepository.saveAll(users);
+                for (User u : users) {
+                    entityManager.persist(u);
+                }
             }
-        };
+            return null;
+        });
     }
 }

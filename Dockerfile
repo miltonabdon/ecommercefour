@@ -15,13 +15,10 @@ COPY src ./src
 # Compila e empacota a aplicação, pulando os testes
 RUN mvn clean install -DskipTests
 
-# Copia o JAR gerado para o diretório raiz do container com o nome app.jar
-# Atenção: Se o seu JAR tiver um nome diferente, você pode precisar ajustar
-# Por exemplo: COPY target/seu-projeto-0.0.1-SNAPSHOT.jar app.jar
-COPY target/*.jar ecommercefour-0.0.1-SNAPSHOT.jar
-
 # Expõe a porta que sua aplicação Spring Boot usa (ajustada para 8081 conforme application.properties)
 EXPOSE 8081
 
-# Comando para iniciar a aplicação quando o container for executado
-ENTRYPOINT ["java", "-jar", "ecommercefour-0.0.1-SNAPSHOT.jar"]
+# Use o JAR gerado pelo Maven dentro do container
+# Observação: Após o comando RUN mvn clean install, o JAR estará em target/
+# Portanto, basta executá-lo diretamente sem copiar artefatos do host
+ENTRYPOINT ["java", "-jar", "target/ecommercefour-0.0.1-SNAPSHOT.jar"]

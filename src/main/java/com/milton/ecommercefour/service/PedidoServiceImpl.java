@@ -37,12 +37,12 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional(noRollbackFor = EstoqueInsuficienteException.class)
     public String processarPagamento(Pedido pedido) {
-        if (pedido == null || pedido.produtos() == null || pedido.produtos().isEmpty()) {
+        if (pedido == null || pedido.getProdutos() == null || pedido.getProdutos().isEmpty()) {
             cancelarPedidoSePossivel(pedido);
             throw new EstoqueInsuficienteException("Pedido inválido: lista de produtos ausente. Pedido cancelado.");
         }
 
-        Map<UUID, Long> solicitados = pedido.produtos().stream()
+        Map<UUID, Long> solicitados = pedido.getProdutos().stream()
                 .map(Produto::id)
                 .peek(id -> {
                     if (id == null) {
@@ -94,27 +94,27 @@ public class PedidoServiceImpl implements PedidoService {
 
     private void cancelarPedidoSePossivel(Pedido pedido) {
         try {
-            if (pedido != null && pedido.id() != null) {
-                UUID id = pedido.id();
+            if (pedido != null && pedido.getId() != null) {
+                UUID id = pedido.getId();
                 String username = currentUsername();
                 Pedido existente = pedidoRepository.findById(id)
                         .orElse(new Pedido(
                                 id,
-                                pedido.produtos(),
+                                pedido.getProdutos(),
                                 Status.CANCELADO,
                                 false,
-                                calcularTotal(pedido.produtos()),
-                                pedido.createdBy() != null ? pedido.createdBy() : username,
+                                calcularTotal(pedido.getProdutos()),
+                                pedido.getCreatedBy() != null ? pedido.getCreatedBy() : username,
                                 new Date()
                         ));
                 Pedido cancelado = new Pedido(
-                        existente.id(),
-                        existente.produtos(),
+                        existente.getId(),
+                        existente.getProdutos(),
                         Status.CANCELADO,
                         false,
-                        calcularTotal(existente.produtos()),
-                        existente.createdBy() != null ? existente.createdBy() : username,
-                        existente.dataCriacao() != null ? existente.dataCriacao() : new Date()
+                        calcularTotal(existente.getProdutos()),
+                        existente.getCreatedBy() != null ? existente.getCreatedBy() : username,
+                        existente.getDataCriacao() != null ? existente.getDataCriacao() : new Date()
                 );
                 pedidoRepository.save(cancelado);
             }

@@ -1,124 +1,139 @@
-🚀 Projeto Backend Java Spring Boot com MySQL & Docker Compose
-🌟 Visão Geral do Projeto
-Este projeto demonstra uma aplicação backend desenvolvida em Java com Spring Boot, que se conecta a um banco de dados MySQL. O foco principal é a demonstração de um setup robusto e replicável utilizando Docker Compose para orquestrar os serviços da aplicação e do banco de dados, facilitando o desenvolvimento, testes e deploy.
+# 🚀 Ecommercefour — Backend Java Spring Boot com MySQL & Docker Compose
 
-A arquitetura do projeto prioriza:
+Este repositório contém uma API REST de e-commerce construída com Spring Boot 3 (Java 21), persistência em MySQL 8 e empacotada para execução em Docker. O projeto inclui autenticação via JWT, CRUD de produtos, processamento de pedidos com regras de negócio (estoque, cancelamento automático, cálculo de total), e endpoints analíticos otimizados para MySQL.
 
-Modularidade: Componentes bem definidos e desacoplados.
-Facilidade de Implantação: Utilização de containers Docker para ambientes consistentes.
-Manutenibilidade: Código limpo e configurável.
-Segurança: Configuração inicial com foco em boas práticas de credenciais e comunicação.
-🛠️ Tecnologias Utilizadas
-Java 21 (LTS): Linguagem de programação principal.
-Spring Boot 3.x: Framework para desenvolvimento rápido de aplicações Java.
-Maven: Ferramenta de automação de build e gerenciamento de dependências.
-MySQL 8.0: Sistema de gerenciamento de banco de dados relacional.
-Docker: Plataforma para desenvolvimento, envio e execução de aplicações em containers.
-Docker Compose: Ferramenta para definir e executar aplicações Docker multi-container.
-�� Pré-requisitos
-Para rodar este projeto, você precisará ter o seguinte software instalado em sua máquina:
 
-Docker Desktop (inclui Docker Engine e Docker Compose)
+## 🧱 Tecnologias
+- Java 21
+- Spring Boot 3.x (Web, Security, Data JPA)
+- MySQL 8
+- Maven
+- Docker e Docker Compose
 
-www.docker.com
 
-docs.docker.com
-🚀 Primeiros Passos
-Siga as instruções abaixo para configurar e executar a aplicação em seu ambiente local usando Docker Compose.
+## 📦 Arquitetura (alto nível)
+- Camada Controller: expõe endpoints REST (Auth, Produtos, Pedidos, Analytics)
+- Camada Service: regras de negócio (ex.: processar pagamento, atualizar estoque, cancelar pedido)
+- Repositórios JPA: acesso ao MySQL
+- Entidades: Produto, Pedido, User, Status
 
-1. Clonar o Repositório
-   bash
-   Copiar
 
-git clone [URL_DO_SEU_REPOSITORIO]
-cd [NOME_DO_DIRETORIO_DO_PROJETO]
-2. Configuração do Banco de Dados e Aplicação
-   O projeto utiliza variáveis de ambiente para a conexão com o banco de dados. Essas variáveis são definidas no arquivo docker-compose.yml e no application.properties/application.yml da sua aplicação Spring Boot.
+## 🔐 Autenticação e Autorização
+- Usuários in-memory para login inicial (configurados em SecurityConfig):
+  - admin / admin123 (ROLE_ADMIN)
+  - user / user123 (ROLE_USER)
+- Fluxo:
+  1. POST /auth/login com {"username","password"}
+  2. Recebe token JWT
+  3. Enviar nas próximas requisições: Header Authorization: Bearer <token>
+- Endpoint público de saúde: GET /auth/ping → {"status":"ok"}
 
-Arquivo: src/main/resources/application.properties (ou .yml)
 
-properties
-Copiar
+## 🗃️ Banco de Dados e Seed
+- MySQL é criado via Docker Compose com as credenciais abaixo
+- Ao iniciar a aplicação, dados de exemplo são inseridos (seed) em transação:
+  - 15 Produtos com IDs UUID e metadados
+  - 5 Pedidos (Status PENDENTE, pago=false, valorTotal calculado, createdBy="admin")
+  - 4 Users (persistidos em tabela users)
+- Observação: o DDL está configurado como create-drop (dados são recriados a cada start em dev)
 
-# Exemplo para application.properties
-server.port=8080
-spring.datasource.url=${SPRING_DATASOURCE_URL}
-spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
-Nota: É crucial que sua aplicação leia essas variáveis de ambiente (SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD).
 
-3. Executar a Aplicação com Docker Compose
-   Navegue até o diretório raiz do projeto (onde o docker-compose.yml está localizado) e execute o seguinte comando:
+## ⚙️ Como executar com Docker Compose (recomendado)
+Pré-requisitos: Docker Desktop instalado.
 
-bash
-Copiar
+1. Clonar o repositório
+   - git clone <URL_DO_REPO>
+   - cd ecommercefour
 
-docker-compose up --build
---build: Garante que as imagens (especialmente a da sua aplicação Java) sejam construídas a partir do Dockerfile mais recente.
-Este comando irá:
-Construir a imagem Docker para a sua aplicação Java.
-Baixar a imagem do MySQL 8.0 (se ainda não estiver presente).
-Iniciar ambos os serviços (mysql_db e java_app).
-O serviço java_app só iniciará após o mysql_db estar completamente inicializado e saudável (graças ao healthcheck e depends_on).
-Para rodar em segundo plano (detached mode), adicione -d:
+2. Subir os serviços
+   - docker compose up --build
+   - Para rodar em segundo plano: docker compose up --build -d
 
-bash
-Copiar
+3. Acessos
+   - API: http://localhost:8081
+   - MySQL: localhost:3306
 
-docker-compose up --build -d
-�� Acessando a Aplicação e o Banco de Dados
-Aplicação Backend
-A aplicação estará acessível no seu navegador ou via Postman/Insomnia em:
-http://localhost:8081
+O Compose usa compose.yaml (já incluído no repo) com variáveis de ambiente compatíveis com application.properties.
 
-Testes rápidos via Postman/curl:
-- GET http://localhost:8081/auth/ping → deve retornar {"status":"ok"}
-- POST http://localhost:8081/auth/login com JSON {"username":"user","password":"user123"} → deve retornar um token JWT
 
-Importante sobre portas:
-- Usando Docker Compose, a porta do host mapeia diretamente para 8081 do container (8081:8081). Portanto, use http://localhost:8081.
-- Se alterar server.port no application.properties, ajuste também a porta no compose.yaml.
+## 🔧 Variáveis de Ambiente relevantes (já definidas no compose)
+- SPRING_DATASOURCE_URL=jdbc:mysql://mysql_db:3306/ecommerce_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+- SPRING_DATASOURCE_USERNAME=ecommerceuser
+- SPRING_DATASOURCE_PASSWORD=ecommercepass
 
-Banco de Dados MySQL
-Você pode conectar-se ao banco de dados MySQL de sua máquina local (usando ferramentas como MySQL Workbench, DBeaver, DataGrip) com as seguintes credenciais:
-Host: localhost
-Porta: 3306
-Usuário: ecommerceuser
-Senha: ecommercepass
-Banco de Dados: ecommerce_db
-(Usuário Root): root
-(Senha Root): mymainpassword
-Atenção: As senhas acima são apenas para desenvolvimento. Em produção, utilize segredos gerenciados com segurança (ex: Secret Vaults).
+application.properties principais:
+- server.port=8081
+- spring.jpa.hibernate.ddl-auto=create-drop
+- spring.jpa.show-sql=true
 
-📁 Estrutura do Projeto (Alta Nível)
-.
-├── src/                      # Código fonte da aplicação Java
-│   └── main/
-│       └── java/
-│       └── resources/        # Arquivos de configuração (e.g., application.properties)
-├── pom.xml                   # Configuração do Maven
-├── Dockerfile                # Instruções para construir a imagem Docker da aplicação Java
-├── docker-compose.yml        # Orquestração dos containers (aplicação Java e MySQL)
-└── README.md                 # Este arquivo
-🔑 Considerações de Segurança
-Credenciais: As credenciais do banco de dados são injetadas via variáveis de ambiente no Docker Compose, o que é uma prática recomendada para evitar hardcoding. Em produção, considere usar soluções como HashiCorp Vault ou AWS Secrets Manager.
-HTTPS: Para qualquer aplicação em produção, é mandatório configurar HTTPS (TLS/SSL) para criptografar a comunicação entre clientes e o backend.
-Validação de Entrada: Toda entrada do usuário deve ser rigorosamente validada para prevenir ataques como injeção SQL, XSS, etc. (O Spring Boot oferece Bean Validation para isso).
-Dependências: Manter as bibliotecas atualizadas (Maven, Spring Boot, etc.) é crucial para proteger contra vulnerabilidades conhecidas (CVEs).
-⚙️ Desenvolvimento Local (Sem Docker Compose)
-Para desenvolver e testar a aplicação Java diretamente em sua máquina (sem Docker Compose para o backend, mas ainda precisando de um MySQL local ou remoto):
 
-Instale: JDK 21 e Maven.
-Configure: As propriedades de conexão com o banco de dados diretamente no application.properties para apontar para um MySQL disponível (ex: spring.datasource.url=jdbc:mysql://localhost:3306/db_nutricionista).
-Execute:
-bash
-Copiar
+## 🧪 Testes rápidos (curl/Postman)
+- Saúde
+  - GET http://localhost:8081/auth/ping → {"status":"ok"}
+- Login (JWT)
+  - POST http://localhost:8081/auth/login
+    - Body: {"username":"user","password":"user123"}
+    - Resposta: { token, username, roles }
+- Produtos
+  - GET /produtos (requer JWT ROLE_USER ou ROLE_ADMIN)
+  - GET /produtos/{id}
+  - POST /produtos (ROLE_USER/ADMIN)
+  - PUT /produtos/{id} (ROLE_ADMIN)
+  - DELETE /produtos/{id} (ROLE_ADMIN)
+- Pedidos
+  - POST /pedidos/pagamento → processa pagamento, valida estoque e atualiza; cancela automaticamente se faltou estoque
+  - GET /pedidos/me → lista pedidos do usuário autenticado (createdBy)
+- Analytics (requer JWT)
+  - GET /analytics/top-usuarios?limit=5 → top usuários por gasto total
+  - GET /analytics/avg-ticket → ticket médio por usuário
+  - GET /analytics/receita-por-mes → receita agregada por mês
 
-mvn clean install
-mvn spring-boot:run
-🤝 Contribuição
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests.
+Observações de negócio:
+- Pagamento com estoque insuficiente: pedido é salvo/cancelado e retorna 400 (EstoqueInsuficienteException)
+- Alteração de preço do produto recalcula automaticamente o valorTotal dos pedidos que o contêm
+
+
+## 💻 Executar localmente (sem Docker)
+Pré-requisitos: JDK 21 e Maven, além de um MySQL acessível.
+
+1. Configure seu MySQL local (ou remoto) e crie o schema ecommerce_db
+2. Ajuste src/main/resources/application.properties para apontar para seu MySQL, por exemplo:
+   - spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+   - spring.datasource.username=seu_usuario
+   - spring.datasource.password=sua_senha
+3. Rodar:
+   - mvn clean install
+   - mvn spring-boot:run
+A aplicação subirá em http://localhost:8081
+
+
+## 🧰 Troubleshooting
+- Public Key Retrieval is not allowed (MySQL)
+  - Incluímos allowPublicKeyRetrieval=true no JDBC URL do compose; use o mesmo em dev local
+- ECONNRESET ao chamar /auth/ping em Docker
+  - Garanta que a imagem foi reconstruída (docker compose up --build) e que a aplicação está expondo 8081
+- Falha ao iniciar por mapeamentos JPA
+  - O projeto já está ajustado para Records (Produto, User) e Classe (Pedido) com colunas e relacionamentos compatíveis
+- Dados sumindo entre restarts
+  - ddl-auto=create-drop é intencional em dev; altere para update se quiser persistir dados
+
+
+## 📂 Estrutura do projeto (resumo)
+- src/main/java/com/milton/ecommercefour
+  - controller/ (Auth, Produto, Pedido, Analytics)
+  - service/ (interfaces + impls)
+  - repository/
+  - domain/ (Pedido, Produto, User, Status)
+  - config/ (Security/JWT)
+  - exception/ (handlers e exceções personalizadas)
+- src/main/resources/application.properties
+- compose.yaml
+- Dockerfile
+- pom.xml
+
+
+## 🤝 Contribuição
+Contribuições são bem-vindas! Abra uma issue ou envie um PR.
+
+## 📜 Licença
+Uso livre para fins educacionais e de demonstração. Ajuste conforme a política da sua organização.

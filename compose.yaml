@@ -25,8 +25,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/ecommerce_db?useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/ecommerce_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ecommerceuser
       SPRING_DATASOURCE_PASSWORD: ecommercepass
     depends_on:
       mysql_db:

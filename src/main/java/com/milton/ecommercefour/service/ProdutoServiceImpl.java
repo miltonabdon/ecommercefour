@@ -66,8 +66,9 @@ public class ProdutoServiceImpl implements ProdutoService {
     @Override
     public Produto create(Produto produto) {
         Date now = new Date();
+        // Since IDs are assigned by the application (no @GeneratedValue), ensure a new UUID here
         Produto toSave = new Produto(
-                null,
+                java.util.UUID.randomUUID(),
                 produto.nome(),
                 produto.descricao(),
                 produto.preco(),
@@ -85,7 +86,15 @@ public class ProdutoServiceImpl implements ProdutoService {
         List<Pedido> pedidos = pedidoRepository.findByProdutos_Id(produtoId);
         if (pedidos == null || pedidos.isEmpty()) return;
         List<Pedido> atualizados = pedidos.stream()
-                .map(p -> new Pedido(p.id(), p.produtos(), p.status(), p.pago(), calcularTotal(p.produtos()), p.createdBy(), p.dataCriacao()))
+                .map(p -> new Pedido(
+                        p.getId(),
+                        p.getProdutos(),
+                        p.getStatus(),
+                        p.getPago(),
+                        calcularTotal(p.getProdutos()),
+                        p.getCreatedBy(),
+                        p.getDataCriacao()
+                ))
                 .toList();
         pedidoRepository.saveAll(atualizados);
     }
