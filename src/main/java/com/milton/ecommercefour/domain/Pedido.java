@@ -24,13 +24,13 @@ public class Pedido {
 
     private Boolean pago;
 
-    @Column(name = "valorTotal")
+    @Column(name = "valor_total")
     private Double valorTotal;
 
-    @Column(name = "createdBy")
+    @Column(name = "created_by")
     private String createdBy;
 
-    @Column(name = "dataCriacao")
+    @Column(name = "data_criacao")
     private Date dataCriacao;
 
     public Pedido() {

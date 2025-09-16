@@ -1,7 +1,8 @@
 package com.milton.ecommercefour.service;
 
 import com.milton.ecommercefour.domain.Pedido;
+import org.springframework.http.ResponseEntity;
 
 public interface PedidoService {
-    String processarPagamento(Pedido pedido);
+    ResponseEntity<Object> processarPagamento(Pedido pedido);
 }

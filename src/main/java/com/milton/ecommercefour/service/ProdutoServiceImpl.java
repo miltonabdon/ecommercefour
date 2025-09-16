@@ -45,20 +45,19 @@ public class ProdutoServiceImpl implements ProdutoService {
 
     @Override
     public Produto update(UUID id, Produto produto) {
-        // Preserve ID and timestamps semantics: update dataAtualizacao to now
+
         Date now = new Date();
         Produto updated = new Produto(
                 id,
-                produto.nome(),
-                produto.descricao(),
-                produto.preco(),
-                produto.categoria(),
-                produto.quantidadeEstoque(),
-                produto.dataCriacao(), // keep original if provided; if null, keep null
+                produto.getNome(),
+                produto.getDescricao(),
+                produto.getPreco(),
+                produto.getCategoria(),
+                produto.getQuantidadeEstoque(),
+                produto.getDataCriacao(),
                 now
         );
         Produto saved = produtoRepository.save(updated);
-        // Recalculate totals for all Pedidos containing this product
         recalcPedidosTotalForProduct(id);
         return saved;
     }
@@ -66,19 +65,18 @@ public class ProdutoServiceImpl implements ProdutoService {
     @Override
     public Produto create(Produto produto) {
         Date now = new Date();
-        // Since IDs are assigned by the application (no @GeneratedValue), ensure a new UUID here
         Produto toSave = new Produto(
                 java.util.UUID.randomUUID(),
-                produto.nome(),
-                produto.descricao(),
-                produto.preco(),
-                produto.categoria(),
-                produto.quantidadeEstoque(),
+                produto.getNome(),
+                produto.getDescricao(),
+                produto.getPreco(),
+                produto.getCategoria(),
+                produto.getQuantidadeEstoque(),
                 now,
                 now
         );
         Produto saved = produtoRepository.save(toSave);
-        // New product may not be referenced yet; no recalculation needed
+
         return saved;
     }
 
@@ -102,7 +100,7 @@ public class ProdutoServiceImpl implements ProdutoService {
     private double calcularTotal(List<Produto> produtos) {
         if (produtos == null) return 0.0;
         return produtos.stream()
-                .map(Produto::preco)
+                .map(Produto::getPreco)
                 .filter(Objects::nonNull)
                 .mapToDouble(Double::doubleValue)
                 .sum();

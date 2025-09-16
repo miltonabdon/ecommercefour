@@ -22,7 +22,7 @@ public class AnalyticsController {
         this.analyticsService = analyticsService;
     }
 
-    @GetMapping("/top-usuarios")
+    @GetMapping("/topUsuarios")
     public List<UsuarioTopProjecao> topUsers(@RequestParam(name = "limit", defaultValue = "5") int limit) {
         if (limit < 1) {
             throw new RequisicaoInvalidaException("Parâmetro 'limit' deve ser >= 1");
@@ -30,12 +30,12 @@ public class AnalyticsController {
         return analyticsService.topUsuarios(limit);
     }
 
-    @GetMapping("/avg-ticket")
+    @GetMapping("/avgTicket")
     public List<TicketMedioProjecao> averageTicketPerUser() {
         return analyticsService.ticketMedioPorUsuario();
     }
 
-    @GetMapping("/receita-por-mes")
+    @GetMapping("/receitaPorMes")
     public List<ReceitaMensalProjecao> revenueByMonth() {
         return analyticsService.receitaPorMes();
     }

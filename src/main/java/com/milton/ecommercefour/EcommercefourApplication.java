@@ -62,7 +62,7 @@ public class EcommercefourApplication {
                 List<Produto> allProdutos = produtoRepository.findAll();
                 if (!allProdutos.isEmpty()) {
                     // Work with managed references to avoid detached entity errors when persisting Pedido
-                    List<UUID> allIds = new ArrayList<>(allProdutos.stream().map(Produto::id).toList());
+                    List<UUID> allIds = new ArrayList<>(allProdutos.stream().map(Produto::getId).toList());
                     for (int i = 1; i <= 5; i++) {
                         int size = ThreadLocalRandom.current().nextInt(1, Math.min(6, allIds.size() + 1));
                         Collections.shuffle(allIds);
@@ -70,7 +70,7 @@ public class EcommercefourApplication {
                         List<Produto> selectedManaged = selectedIds.stream()
                                 .map(id -> entityManager.getReference(Produto.class, id))
                                 .toList();
-                        double total = selectedManaged.stream().map(Produto::preco).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
+                        double total = selectedManaged.stream().map(Produto::getPreco).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
                         Date createdAt = new Date();
                         Pedido novo = new Pedido(sequentialUUID(1000L + i), selectedManaged, Status.PENDENTE, false, total, "admin", createdAt);
                         entityManager.persist(novo);

@@ -53,6 +53,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno do servidor", "Erro", null);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno do servidor", "Erro " + ex.getMessage(), null);
     }
 }

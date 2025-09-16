@@ -3,6 +3,7 @@ package com.milton.ecommercefour.controller;
 import com.milton.ecommercefour.domain.Pedido;
 import com.milton.ecommercefour.repository.PedidoRepository;
 import com.milton.ecommercefour.service.PedidoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,12 +26,17 @@ public class PedidoController {
         this.pedidoRepository = pedidoRepository;
     }
 
+    @GetMapping
+    public Iterable<Pedido> listarPedidos() {
+        return pedidoRepository.findAll();
+    }
+
     @PostMapping("/pagamento")
-    public String processarPagamento(@RequestBody Pedido pedido) {
+    public ResponseEntity<Object> processarPagamento(@RequestBody Pedido pedido) {
         return pedidoService.processarPagamento(pedido);
     }
 
-    @GetMapping("/me")
+    @GetMapping("/meusPedidos")
     public List<Pedido> listarMeusPedidos() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth != null ? auth.getName() : null;

@@ -43,12 +43,12 @@ public class ProdutoController {
         // Keep original creation date if present in existing
         Produto toUpdate = new Produto(
                 id,
-                produto.nome(),
-                produto.descricao(),
-                produto.preco(),
-                produto.categoria(),
-                produto.quantidadeEstoque(),
-                existente.dataCriacao(),
+                produto.getNome(),
+                produto.getDescricao(),
+                produto.getPreco(),
+                produto.getCategoria(),
+                produto.getQuantidadeEstoque(),
+                existente.getDataCriacao(),
                 null
         );
         Produto updated = produtoService.update(id, toUpdate);

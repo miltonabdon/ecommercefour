@@ -6,6 +6,7 @@ import com.milton.ecommercefour.domain.Status;
 import com.milton.ecommercefour.exception.EstoqueInsuficienteException;
 import com.milton.ecommercefour.repository.PedidoRepository;
 import com.milton.ecommercefour.repository.ProdutoRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class PedidoServiceImpl implements PedidoService {
     private double calcularTotal(List<Produto> produtos) {
         if (produtos == null) return 0.0;
         return produtos.stream()
-                .map(Produto::preco)
+                .map(Produto::getPreco)
                 .filter(Objects::nonNull)
                 .mapToDouble(Double::doubleValue)
                 .sum();
@@ -36,14 +37,14 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     @Transactional(noRollbackFor = EstoqueInsuficienteException.class)
-    public String processarPagamento(Pedido pedido) {
+    public ResponseEntity<Object> processarPagamento(Pedido pedido) {
         if (pedido == null || pedido.getProdutos() == null || pedido.getProdutos().isEmpty()) {
             cancelarPedidoSePossivel(pedido);
             throw new EstoqueInsuficienteException("Pedido inválido: lista de produtos ausente. Pedido cancelado.");
         }
 
         Map<UUID, Long> solicitados = pedido.getProdutos().stream()
-                .map(Produto::id)
+                .map(Produto::getId)
                 .peek(id -> {
                     if (id == null) {
                         cancelarPedidoSePossivel(pedido);
@@ -66,22 +67,22 @@ public class PedidoServiceImpl implements PedidoService {
             }
             Produto existente = opt.get();
 
-            Double disponivel = existente.quantidadeEstoque();
+            Double disponivel = existente.getQuantidadeEstoque();
             if (disponivel == null || disponivel < qtdSolicitada) {
-                String nome = existente.nome() != null ? existente.nome() : produtoId.toString();
+                String nome = existente.getNome() != null ? existente.getNome() : produtoId.toString();
                 double disp = disponivel == null ? 0.0 : disponivel;
                 cancelarPedidoSePossivel(pedido);
                 throw new EstoqueInsuficienteException("Estoque insuficiente para produto " + nome + ". Solicitado: " + qtdSolicitada + ", disponível: " + disp + ". Pedido cancelado.");
             }
 
             Produto atualizado = new Produto(
-                    existente.id(),
-                    existente.nome(),
-                    existente.descricao(),
-                    existente.preco(),
-                    existente.categoria(),
-                    existente.quantidadeEstoque() - qtdSolicitada,
-                    existente.dataCriacao(),
+                    existente.getId(),
+                    existente.getNome(),
+                    existente.getDescricao(),
+                    existente.getPreco(),
+                    existente.getCategoria(),
+                    existente.getQuantidadeEstoque() - qtdSolicitada,
+                    existente.getDataCriacao(),
                     now
             );
             atualizados.add(atualizado);
@@ -89,7 +90,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         produtoRepository.saveAll(atualizados);
 
-        return "Pagamento processado com sucesso";
+        return ResponseEntity.ok("Pagamento processado com sucesso.");
     }
 
     private void cancelarPedidoSePossivel(Pedido pedido) {
