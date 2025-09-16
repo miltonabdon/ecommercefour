@@ -3,6 +3,7 @@ package com.milton.ecommercefour.controller;
 import com.milton.ecommercefour.domain.Produto;
 import com.milton.ecommercefour.exception.RecursoNaoEncontradoException;
 import com.milton.ecommercefour.service.ProdutoService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,7 @@ public class ProdutoController {
     @PostMapping
     public ResponseEntity<Produto> create(@RequestBody Produto produto) {
         Produto created = produtoService.create(produto);
-        return ResponseEntity.ok(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
@@ -52,7 +53,7 @@ public class ProdutoController {
                 null
         );
         Produto updated = produtoService.update(id, toUpdate);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -61,6 +62,6 @@ public class ProdutoController {
         produtoService.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Produto não encontrado: " + id));
         produtoService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
