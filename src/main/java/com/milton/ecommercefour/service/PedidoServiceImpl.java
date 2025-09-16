@@ -6,6 +6,7 @@ import com.milton.ecommercefour.domain.Status;
 import com.milton.ecommercefour.exception.EstoqueInsuficienteException;
 import com.milton.ecommercefour.repository.PedidoRepository;
 import com.milton.ecommercefour.repository.ProdutoRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +26,13 @@ public class PedidoServiceImpl implements PedidoService {
     public PedidoServiceImpl(ProdutoRepository produtoRepository, PedidoRepository pedidoRepository) {
         this.produtoRepository = produtoRepository;
         this.pedidoRepository = pedidoRepository;
+    }
+
+    private static UUID sequentialUUID(long sequence) {
+        long now = System.currentTimeMillis();
+        long msb = (now << 16) | (sequence & 0xFFFF);
+        long lsb = ThreadLocalRandom.current().nextLong();
+        return new UUID(msb, lsb);
     }
 
     private double calcularTotal(List<Produto> produtos) {
@@ -91,6 +100,44 @@ public class PedidoServiceImpl implements PedidoService {
         produtoRepository.saveAll(atualizados);
 
         return ResponseEntity.ok("Pagamento processado com sucesso.");
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> geraPedido(Iterable<Produto> produtos) {
+
+        List<Produto> produtosParaProcessar = new ArrayList<>();
+
+        if (produtos != null) {
+            for (Produto produto : produtos) {
+                // Se o produto não tem ID, é um produto novo vindo da requisição
+                // Atribuímos um UUID a ele.
+                if (produto.getId() == null) {
+                    produto.setId(UUID.randomUUID());
+                }
+                produtosParaProcessar.add(produto);
+            }
+        }
+
+        List<Produto> produtosGerenciados = Collections.emptyList();
+        if (!produtosParaProcessar.isEmpty()) {
+            produtosGerenciados = produtoRepository.saveAll(produtosParaProcessar);
+        }
+
+        Pedido build = Pedido.builder()
+                .produtos(produtosGerenciados)
+                .status(Status.PENDENTE)
+                .pago(false)
+                .valorTotal(0.0)
+                .createdBy(currentUsername())
+                .dataCriacao(new Date())
+                .id(UUID.randomUUID())
+                .build();
+
+        Pedido save = pedidoRepository.save(build);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(save);
+
     }
 
     private void cancelarPedidoSePossivel(Pedido pedido) {

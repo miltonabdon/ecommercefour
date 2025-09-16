@@ -1,6 +1,7 @@
 package com.milton.ecommercefour.controller;
 
 import com.milton.ecommercefour.domain.Pedido;
+import com.milton.ecommercefour.domain.Produto;
 import com.milton.ecommercefour.repository.PedidoRepository;
 import com.milton.ecommercefour.service.PedidoService;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,11 @@ public class PedidoController {
     @PostMapping("/pagamento")
     public ResponseEntity<Object> processarPagamento(@RequestBody Pedido pedido) {
         return pedidoService.processarPagamento(pedido);
+    }
+
+    @PostMapping("/gera")
+    public ResponseEntity<Object> geraPedido(@RequestBody Iterable<Produto> produtos) {
+        return pedidoService.geraPedido(produtos);
     }
 
     @GetMapping("/meusPedidos")

@@ -36,7 +36,6 @@ public class EcommercefourApplication {
     @Bean
     CommandLineRunner seedData(ProdutoRepository produtoRepository, PedidoRepository pedidoRepository, UserRepository userRepository, EntityManager entityManager, TransactionTemplate transactionTemplate) {
         return args -> transactionTemplate.execute(status -> {
-            // Seed Produtos
             if (produtoRepository.count() == 0) {
                 Date now = new Date();
                 List<String> categorias = Arrays.asList("Eletrônicos", "Livros", "Casa", "Moda", "Esportes");
@@ -57,11 +56,9 @@ public class EcommercefourApplication {
                 }
             }
 
-            // Seed Pedidos
             if (pedidoRepository.count() == 0) {
                 List<Produto> allProdutos = produtoRepository.findAll();
                 if (!allProdutos.isEmpty()) {
-                    // Work with managed references to avoid detached entity errors when persisting Pedido
                     List<UUID> allIds = new ArrayList<>(allProdutos.stream().map(Produto::getId).toList());
                     for (int i = 1; i <= 5; i++) {
                         int size = ThreadLocalRandom.current().nextInt(1, Math.min(6, allIds.size() + 1));
@@ -75,10 +72,11 @@ public class EcommercefourApplication {
                         Pedido novo = new Pedido(sequentialUUID(1000L + i), selectedManaged, Status.PENDENTE, false, total, "admin", createdAt);
                         entityManager.persist(novo);
                     }
+
+
                 }
             }
 
-            // Seed Users (persist on MySQL)
             if (userRepository.count() == 0) {
                 List<User> users = List.of(
                         new User(sequentialUUID(2000L), "Admin", "User", "admin@ecommerce.com"),
